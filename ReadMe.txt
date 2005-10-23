@@ -1,0 +1,128 @@
+Version 0.1
+
+Saikuro:
+Saikuro is a Ruby cyclomatic complexity analyzer.  When given Ruby
+source code Saikuro will generate a report listing the cyclomatic
+complexity of each method found.  In addition, Saikuro counts the
+number of lines per method and can generate a listing of the number of
+tokens on each line of code.
+
+License:
+Saikuro uses the BSD license.
+
+Installation:
+At the moment there is no installer.  Saikuro is a single Ruby file
+that is executable.  You can run it where you unpacked it or you can
+move it your preferred location such as "/usr/local/bin".
+
+Usage:
+Saikuro is a command line program.
+Running "saikuro.rb -h" will output a usage statement describing all
+the various arguments you can pass it.
+
+"./saikuro.rb -c -p tests/samples.rb"
+
+The above command is a simple example that generate a cyclomatic
+complexity report on the samples.rb file, using the default filter,
+warning and error settings. The report is saved in the current
+directory.
+
+
+A more detailed example is 
+"./saikuro.rb -c -t -i tests -y 0 -w 11 -e 16 -o out/"
+
+This will analyze all of the Ruby files found in the "tests/"
+directory.  Saikuro will generate a token count report and a
+cyclomatic complexity report in the "out" directory .  The "-y 0"
+command will turn off filtering and thus show the complexity of all
+methods.  The "-w 11" will mark all methods with a complexity of 11 or
+higher with a warning.  Finally, "-e 16" will flag all methods with a
+complexity of 16 or higher with an error.
+
+
+About Cyclomatic Complexity:
+
+The following document provides a very good and detailed description
+by the author of cyclomatic complexity.
+
+NIST Special Publication 500-235 
+Structured Testing: A Testing Methodology Using the Cyclomatic
+Complexity Metric
+
+By Arthur H. Watson and Thomas J. McCabe
+HTML
+http://hissa.nist.gov/HHRFdata/Artifacts/ITLdoc/235/title.htm
+PDF 
+http://www.mccabe.com/iq_research_nist.htm
+
+
+How and what Saikuro counts to calculate the cyclomatic complexity:
+
+Saikuro uses the Simplified Complexity Calculation, which is just
+adding up the number of branch points in a method.
+
+Each method starts with a complexity of 1, because there is at least
+one path through the code.  Then each conditional or looping operator
+(if, unless, while, until, for, elsif, when) adds 1 to the
+complexity. Each "when" in a case statement adds 1.  Also each
+"rescue" statement adds 1.
+
+I am also counting blocks as an addition to the complexity, because a
+block in many cases does add a path that may be traversed.  For
+example, an array that calls "each" has a block that may not be
+traversed if the array is empty.  Thus if you want to find the basis
+set to get 100% coverage of your code then a block should add one.   I
+am not sure if this will increase the signal noise, because of how
+Ruby code makes heavy use of blocks.
+
+Currently, I am not adding 1 to the complexity for the
+short-circuiting "and" operators (&& and "and"), although I should
+following McCabe's document listed above.
+
+
+#Example
+
+ # Starting values for case 1 and 2
+ x = false
+ y = 15
+ r, q = nil
+
+ # case 1
+ puts "W" if ((r = x) && (q = y))
+ puts r # => false
+ puts q # => nil
+
+ # case 2
+ puts "W" if ((q = y) && (r = x))
+ puts r # => false
+ puts q # => 15
+
+Case 1 shows that because the result of ( r = x ) is false the if
+statement stops and returns false without evaluating the ( q = y )
+branch.  Thus if you want total coverage of your source code this
+should add 1 to the complexity.
+
+So why is it not added?
+Mainly, because I have not gotten around to it.  I am wondering if it
+will increase the noise more than it should.
+
+
+Tests:
+In the test directory is a sample file that has examples of the
+various possible cases that I am counting and what I expect the
+cyclomatic complexity result to be.  If you find mistakes or missing
+tests please mail them to me.
+
+Contact:
+Saikuro is written by 
+Zev Blut (zb at ubit dot com)
+
+Acknowledgments:
+Thanks to Elbert Corpuz for writing the CSS for the HTML output!
+
+Other metric tools for Ruby:
+Ryan Davis has an abc metric program as an example in his ParseTree
+product:  http://www.zenspider.com/ZSS/Products/ParseTree/
+
+The PMD project has a tool called CPD that can scan Ruby source code
+looking for source duplication:  http://pmd.sourceforge.net/
