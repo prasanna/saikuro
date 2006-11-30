@@ -11,16 +11,22 @@ License:
 Saikuro uses the BSD license.
 
 Installation:
-At the moment there is no installer.  Saikuro is a single Ruby file
-that is executable.  You can run it where you unpacked it or you can
-move it your preferred location such as "/usr/local/bin".
+Option 1: Using setup.rb
+* login as root
+* run "ruby setup.rb all"
+
+Option 2: The manual way
+Saikuro is a single Ruby file that is executable.  It if found in the bin
+directory.  You can run it where you unpacked it or you can move it your
+preferred location such as "/usr/local/bin".
+
 
 Usage:
 Saikuro is a command line program.
 Running "saikuro.rb -h" will output a usage statement describing all
 the various arguments you can pass it.
 
-"./saikuro.rb -c -p tests/samples.rb"
+"saikuro -c -p tests/samples.rb"
 
 The above command is a simple example that generate a cyclomatic
 complexity report on the samples.rb file, using the default filter,
@@ -29,7 +35,7 @@ directory.
 
 
 A more detailed example is 
-"./saikuro.rb -c -t -i tests -y 0 -w 11 -e 16 -o out/"
+"saikuro -c -t -i tests -y 0 -w 11 -e 16 -o out/"
 
 This will analyze all of the Ruby files found in the "tests/"
 directory.  Saikuro will generate a token count report and a
