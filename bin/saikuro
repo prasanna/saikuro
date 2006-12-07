@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 # $Id$
-# Version 0.1
+# Version 0.2
 # == Usage
 #
-# saikuro.rb [ -h ] [-o output_directory] [-f type] [ -c, -t ] 
+# saikuro [ -h ] [-o output_directory] [-f type] [ -c, -t ]
 # [ -y, -w, -e, -k, -s, -d - number ] ( -p file | -i directory )
 #
 # == Help
@@ -21,28 +21,27 @@
 # -t, --token : Count the number of tokens per line of the input.
 #
 # -y, --filter_cyclo (number) : Filter the output to only include methods
-# whose cyclomatic complexity is greater than or equal to the passed 
-# number.  The default is 4.
+# whose cyclomatic complexity are greater than the passed number.
 #
 # -w, --warn_cyclo (number) : Highlight with a warning methods whose
-# cyclomatic complexity is greather than or equal to the passed number.
-# The default is 8.
+# cyclomatic complexity are greather than or equal to the passed number.
+#
 #
 # -e, --error_cyclo (number) : Highligh with an error methods whose
-# cyclomatic complexity is greather than or equal to the passed number.
-# The default is 11.
+# cyclomatic complexity are greather than or equal to the passed number.
+#
 #
 # -k, --filter_token (number) : Filter the output to only include lines
-# whose token count is greater than or equal to the passed number.
-# The default is 10.
+# whose token count are greater than the passed number.
+#
 #
 # -s, --warn_token (number) : Highlight with a warning lines whose
-# token count is greater than or equal to the passed number.
-# The default is 15.
+# token count are greater than or equal to the passed number.
+#
 #
 # -d, --error_token (number) : Highlight with an error lines whose
-# token count is greater than or equal to the passed number.
-# The default is 30.
+# token count are greater than or equal to the passed number.
+#
 #
 # -p, --parse_file (file) : A file to use as input.
 #
@@ -69,8 +68,8 @@
 #      with the distribution.
 #
 #    * Neither the name of Ubiquitous Business Technology nor the names
-#      of its contributors may be used to endorse or promote products 
-#      derived from this software without specific prior written 
+#      of its contributors may be used to endorse or promote products
+#      derived from this software without specific prior written
 #      permission.
 #
 #
@@ -135,7 +134,11 @@ class TokenCounter
       # Do not count these as tokens
     when TkCOMMENT
       # Ignore this only for comments in a statement?
-      # Ignore TkCOLON? and operators? like . [] { } etc..
+      # Ignore TkCOLON,TkCOLON2  and operators? like "." etc..
+    when TkRBRACK, TkRPAREN, TkRBRACE
+      # Ignore the closing of an array/index/hash/paren
+      # The opening is counted, but no more.
+      # Thus [], () {} is counted as 1 token not 2.
     else
       # may want to filter out comments...
       @tokens_per_line[line_no] += 1
@@ -174,6 +177,7 @@ class ParseState
     @run = true
     # To catch one line def statements, We always have one line.
     @lines = 0
+    @last_token_line_and_char = Array.new
   end
 
   def top_state?
@@ -240,12 +244,41 @@ class ParseState
     while @run do
       tok = @lexer.token
       @run = false if tok.nil?
+      if lexer_loop?(tok)
+        STDERR.puts "Lexer loop at line : #{@lexer.line_no} char #{@lexer.char_no}."
+        @run = false
+      end
+      @last_token_line_and_char<< [@lexer.line_no.to_i, @lexer.char_no.to_i, tok]
       if $VERBOSE
 	puts "DEBUG: #{@lexer.line_no} #{tok.class}:#{tok.name if tok.respond_to?(:name)}"
       end
       @@token_counter.count_token(@lexer.line_no, tok) if count_tokens?
       parse_token(tok)
     end
+  end
+
+  # Ruby-Lexer can go into a loop if the file does not end with a newline.
+  def lexer_loop?(token)
+    return false if @last_token_line_and_char.empty?
+    loop_flag = false
+    last = @last_token_line_and_char.last
+    line = last[0]
+    char = last[1]
+    ltok = last[2]
+
+    if ( (line == @lexer.line_no.to_i) &&
+           (char == @lexer.char_no.to_i) &&
+           (ltok.class == token.class) )
+      # We are potentially in a loop
+      if @last_token_line_and_char.size >= 3
+        loop_flag = true
+      end
+    else
+      # Not in a loop so clear stack
+      @last_token_line_and_char = Array.new
+    end
+
+    loop_flag
   end
 
   def do_begin_token(token)
@@ -269,6 +302,10 @@ class ParseState
   end
 
   def do_identifier_token(token)
+    if (token.name == "__END__" && token.char_no.to_i == 0)
+      # The Ruby code has stopped and the rest is data so cease parsing.
+      @run = false
+    end
     nil
   end
 
@@ -606,7 +643,7 @@ end
 class Filter
   attr_accessor :limit, :error, :warn
 
-  def initialize(limit = -1, warn = 8, error = 11)
+  def initialize(limit = -1, error = 11, warn = 8)
     @limit = limit
     @error = error
     @warn = warn
@@ -1098,58 +1135,58 @@ if __FILE__ == $0
   files = Array.new
   output_dir = "./"
   formater = "html"
-  state_filter = Filter.new(4)
-  token_filter = Filter.new(10, 15, 30)
+  state_filter = Filter.new(5)
+  token_filter = Filter.new(10, 25, 50)
   comp_state = comp_token = false
   begin
     opt = GetoptLong.new(
-                         ["-o","--output_directory", GetoptLong::REQUIRED_ARGUMENT],
-			 ["-h","--help", GetoptLong::NO_ARGUMENT],
-			 ["-f","--formater", GetoptLong::REQUIRED_ARGUMENT],
-			 ["-c","--cyclo", GetoptLong::NO_ARGUMENT],
-			 ["-t","--token", GetoptLong::NO_ARGUMENT],
-			 ["-y","--filter_cyclo", GetoptLong::REQUIRED_ARGUMENT],
-			 ["-k","--filter_token", GetoptLong::REQUIRED_ARGUMENT],
-                         ["-w","--warn_cyclo", GetoptLong::REQUIRED_ARGUMENT],
-			 ["-s","--warn_token", GetoptLong::REQUIRED_ARGUMENT],
-                         ["-e","--error_cyclo", GetoptLong::REQUIRED_ARGUMENT],
-			 ["-d","--error_token", GetoptLong::REQUIRED_ARGUMENT],
-			 ["-p","--parse_file", GetoptLong::REQUIRED_ARGUMENT],
-			 ["-i","--input_directory", GetoptLong::REQUIRED_ARGUMENT],
-			 ["-v","--verbose", GetoptLong::NO_ARGUMENT]
-			 )
+       ["-o","--output_directory", GetoptLong::REQUIRED_ARGUMENT],
+       ["-h","--help", GetoptLong::NO_ARGUMENT],
+       ["-f","--formater", GetoptLong::REQUIRED_ARGUMENT],
+       ["-c","--cyclo", GetoptLong::NO_ARGUMENT],
+       ["-t","--token", GetoptLong::NO_ARGUMENT],
+       ["-y","--filter_cyclo", GetoptLong::REQUIRED_ARGUMENT],
+       ["-k","--filter_token", GetoptLong::REQUIRED_ARGUMENT],
+       ["-w","--warn_cyclo", GetoptLong::REQUIRED_ARGUMENT],
+       ["-s","--warn_token", GetoptLong::REQUIRED_ARGUMENT],
+       ["-e","--error_cyclo", GetoptLong::REQUIRED_ARGUMENT],
+       ["-d","--error_token", GetoptLong::REQUIRED_ARGUMENT],
+       ["-p","--parse_file", GetoptLong::REQUIRED_ARGUMENT],
+       ["-i","--input_directory", GetoptLong::REQUIRED_ARGUMENT],
+       ["-v","--verbose", GetoptLong::NO_ARGUMENT]
+       )
 
     opt.each do |arg,val|
       case arg
       when "-o"
-	output_dir = val
+        output_dir = val
       when "-h"
-	RDoc.usage('help')
+        RDoc.usage('help')
       when "-f"
         formater = val
       when "-c"
-	comp_state = true
+        comp_state = true
       when "-t"
-	comp_token = true
+        comp_token = true
       when "-k"
-	token_filter.limit = val.to_i
+        token_filter.limit = val.to_i
       when "-s"
         token_filter.warn = val.to_i
       when "-d"
         token_filter.error = val.to_i
       when "-y"
-	state_filter.limit = val.to_i
+        state_filter.limit = val.to_i
       when "-w"
         state_filter.warn = val.to_i
       when "-e"
         state_filter.error = val.to_i
       when "-p"
-	files<< val
+        files<< val
       when "-i"
-	files.concat(get_ruby_files(val))
+        files.concat(get_ruby_files(val))
       when "-v"
         STDOUT.puts "Verbose mode on"
-	$VERBOSE = true
+        $VERBOSE = true
       end
 
     end
