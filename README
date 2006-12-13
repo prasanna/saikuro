@@ -1,4 +1,4 @@
-Version 0.1
+Version 0.2
 
 Saikuro:
 Saikuro is a Ruby cyclomatic complexity analyzer.  When given Ruby
@@ -16,9 +16,9 @@ Option 1: Using setup.rb
 * run "ruby setup.rb all"
 
 Option 2: The manual way
-Saikuro is a single Ruby file that is executable.  It if found in the bin
-directory.  You can run it where you unpacked it or you can move it your
-preferred location such as "/usr/local/bin".
+Saikuro is a single Ruby file that is executable.  You can run it where
+you unpacked it or you can move it your preferred location such as
+"/usr/local/bin" or "~/bin".
 
 Note:
 Ruby 1.8.5 has a bug in ri_options that will prevent Saikuro from
@@ -29,26 +29,26 @@ http://www.ruby-lang.org/cgi-bin/cvsweb.cgi/ruby/lib/rdoc/ri/ri_options.rb.diff?
 Usage:
 Saikuro is a command line program.
 Running "saikuro -h" will output a usage statement describing all
-the various arguments you can pass it.
+the various arguments you can pass to it.
 
 "saikuro -c -p tests/samples.rb"
 
-The above command is a simple example that generate a cyclomatic
+The above command is a simple example that generates a cyclomatic
 complexity report on the samples.rb file, using the default filter,
 warning and error settings. The report is saved in the current
 directory.
 
 
-A more detailed example is 
+A more detailed example is
 "saikuro -c -t -i tests -y 0 -w 11 -e 16 -o out/"
 
-This will analyze all of the Ruby files found in the "tests/"
-directory.  Saikuro will generate a token count report and a
-cyclomatic complexity report in the "out" directory .  The "-y 0"
-command will turn off filtering and thus show the complexity of all
-methods.  The "-w 11" will mark all methods with a complexity of 11 or
-higher with a warning.  Finally, "-e 16" will flag all methods with a
-complexity of 16 or higher with an error.
+This will analyze all Ruby files found in the "tests/" directory.
+Saikuro will generate a token count report and a cyclomatic complexity
+report in the "out" directory .  The "-y 0" command will turn off
+filtering and thus show the complexity of all methods.  The "-w 11"
+will mark all methods with a complexity of 11 or higher with a
+warning.  Finally, "-e 16" will flag all methods with a complexity of
+16 or higher with an error.
 
 
 About Cyclomatic Complexity:
@@ -56,14 +56,14 @@ About Cyclomatic Complexity:
 The following document provides a very good and detailed description
 by the author of cyclomatic complexity.
 
-NIST Special Publication 500-235 
+NIST Special Publication 500-235
 Structured Testing: A Testing Methodology Using the Cyclomatic
 Complexity Metric
 
 By Arthur H. Watson and Thomas J. McCabe
 HTML
 http://hissa.nist.gov/HHRFdata/Artifacts/ITLdoc/235/title.htm
-PDF 
+PDF
 http://www.mccabe.com/iq_research_nist.htm
 
 
@@ -74,24 +74,26 @@ adding up the number of branch points in a method.
 
 Each method starts with a complexity of 1, because there is at least
 one path through the code.  Then each conditional or looping operator
-(if, unless, while, until, for, elsif, when) adds 1 to the
-complexity. Each "when" in a case statement adds 1.  Also each
-"rescue" statement adds 1.
+(if, unless, while, until, for, elsif, when) adds one point to the
+complexity. Each "when" in a case statement adds one point.  Also each
+"rescue" statement adds one.
 
-I am also counting blocks as an addition to the complexity, because a
-block in many cases does add a path that may be traversed.  For
-example, an array that calls "each" has a block that may not be
-traversed if the array is empty.  Thus if you want to find the basis
-set to get 100% coverage of your code then a block should add one.   I
-am not sure if this will increase the signal noise, because of how
-Ruby code makes heavy use of blocks.
+Saikuro also regards blocks as an addition to a method's complexity
+because in many cases a block does add a path that may be traversed.
+For example, invoking the "each" method of an array with a block would
+only traverse the give block if the array is not empty.  Thus if you
+want to find the basis set to get 100% coverage of your code then a
+block should add one point to the method's complexity.  It is not yet
+for sure however to what level the accuracy is decreased through this
+measurement, as normal Ruby code uses blocks quite heavily and new
+paths are not necessarily introduced by every block.
 
-Currently, I am not adding 1 to the complexity for the
-short-circuiting "and" operators (&& and "and"), although I should
-following McCabe's document listed above.
+In addition, the short-circuiting "and" operators (&& and "and")
+currently do not contribute to a method's complexity, although
+McCabe's paper listed above suggests doing so.
 
 
-#Example
+#Example for "and" operator handling:
 
  # Starting values for case 1 and 2
  x = false
@@ -108,24 +110,25 @@ following McCabe's document listed above.
  puts r # => false
  puts q # => 15
 
-Case 1 shows that because the result of ( r = x ) is false the if
-statement stops and returns false without evaluating the ( q = y )
-branch.  Thus if you want total coverage of your source code this
-should add 1 to the complexity.
+Case 1 illustrates why "and" operators should add to a method's
+complexity, because the result of ( r = x ) is false the if statement
+stops and returns false without evaluating the ( q = y ) branch.  Thus
+if a total coverage of source code is desired, one point should be
+added to the method's complexity.
 
 So why is it not added?
-Mainly, because I have not gotten around to it.  I am wondering if it
-will increase the noise more than it should.
+Mainly, because we have not gotten around to it.  We are wondering if
+this would increase the noise more than it should.
 
 
 Tests:
 In the test directory is a sample file that has examples of the
-various possible cases that I am counting and what I expect the
-cyclomatic complexity result to be.  If you find mistakes or missing
-tests please mail them to me.
+various possible cases that we examined and documented the expected
+cyclomatic complexity result.  If you find mistakes or missing tests
+please report them.
 
 Contact:
-Saikuro is written by 
+Saikuro is written by
 Zev Blut (zb at ubit dot com)
 
 Acknowledgments:
