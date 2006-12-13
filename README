@@ -20,10 +20,15 @@ Saikuro is a single Ruby file that is executable.  It if found in the bin
 directory.  You can run it where you unpacked it or you can move it your
 preferred location such as "/usr/local/bin".
 
+Note:
+Ruby 1.8.5 has a bug in ri_options that will prevent Saikuro from
+running.  If you are using 1.8.5 please apply this patch :
+http://www.ruby-lang.org/cgi-bin/cvsweb.cgi/ruby/lib/rdoc/ri/ri_options.rb.diff?r1=1.2.2.13;r2=1.2.2.14
+
 
 Usage:
 Saikuro is a command line program.
-Running "saikuro.rb -h" will output a usage statement describing all
+Running "saikuro -h" will output a usage statement describing all
 the various arguments you can pass it.
 
 "saikuro -c -p tests/samples.rb"
