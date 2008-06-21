@@ -1,4 +1,51 @@
 # $Id$
+# == Usage
+#
+# saikuro [ -h ] [-o output_directory] [-f type] [ -c, -t ]
+# [ -y, -w, -e, -k, -s, -d - number ] ( -p file | -i directory )
+#
+# == Help
+#
+# -o, --output_directory (directory) : A directory to ouput the results in.
+# The current directory is used if this option is not passed.
+#
+# -h, --help : This help message.
+#
+# -f, --formater (html | text) : The format to output the results in.
+# The default is html
+#
+# -c, --cyclo : Compute the cyclomatic complexity of the input.
+#
+# -t, --token : Count the number of tokens per line of the input.
+#
+# -y, --filter_cyclo (number) : Filter the output to only include methods
+# whose cyclomatic complexity are greater than the passed number.
+#
+# -w, --warn_cyclo (number) : Highlight with a warning methods whose
+# cyclomatic complexity are greather than or equal to the passed number.
+#
+#
+# -e, --error_cyclo (number) : Highligh with an error methods whose
+# cyclomatic complexity are greather than or equal to the passed number.
+#
+#
+# -k, --filter_token (number) : Filter the output to only include lines
+# whose token count are greater than the passed number.
+#
+#
+# -s, --warn_token (number) : Highlight with a warning lines whose
+# token count are greater than or equal to the passed number.
+#
+#
+# -d, --error_token (number) : Highlight with an error lines whose
+# token count are greater than or equal to the passed number.
+#
+#
+# -p, --parse_file (file) : A file to use as input.
+#
+# -i, --input_directory (directory) : All ruby files found recursively
+# inside the directory are passed as input.
+
 
 # Saikruo uses the BSD license.
 #
