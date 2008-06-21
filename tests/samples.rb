@@ -278,7 +278,7 @@ EOF
   end
 
   def hash_with_hash1(arg)
-    h => {
+    h = {
       :x => {
         :q => arg
       }
