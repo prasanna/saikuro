@@ -1,8 +1,6 @@
 # This is a patch to RDoc so that when saikuro is installed as a
 # RubyGem usage will read the proper file.
 
-require 'rdoc/usage'
-
 module RDoc
 
   def RDoc.main_program_file=(file)
